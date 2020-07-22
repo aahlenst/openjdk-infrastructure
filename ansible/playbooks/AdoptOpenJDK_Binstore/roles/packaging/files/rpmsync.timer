@@ -1,0 +1,10 @@
+[Unit]
+Description=Run rpmsync ever 15 minutes
+Requires=rpmsync.service
+
+[Timer]
+Unit=rpmsync.service
+OnUnitInactiveSec=15m
+
+[Install]
+WantedBy=timers.target

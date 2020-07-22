@@ -1,0 +1,88 @@
+---
+- name: Ensure reprepro is installed
+  apt:
+    pkg:
+      - reprepro
+      - gpg
+
+- name: Ensure that reprepro directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "{{ repository_root }}"
+    - "{{ repository_root }}/deb"
+    - "{{ repository_root }}/deb/conf"
+    - "{{ repository_root }}/deb/db"
+    - "{{ repository_root }}/deb/dist"
+    - "{{ repository_root }}/deb/pool"
+
+- name: Ensure that reprepro config directories are owned by root
+  file:
+    path: "{{ item }}"
+    owner: "root"
+    group: "root"
+    mode: "u=rwx,g=rx,o=rx"
+  loop:
+    - "{{ repository_root }}"
+    - "{{ repository_root }}/deb"
+    - "{{ repository_root }}/deb/conf"
+
+- name: Ensure that reprepro repository directories are owned by publisher
+  file:
+    path: "{{ item }}"
+    owner: publisher
+    group: publisher
+    mode: "u=rwx,g=rx,o=rx"
+  loop:
+    - "{{ repository_root }}/deb/db"
+    - "{{ repository_root }}/deb/dist"
+    - "{{ repository_root }}/deb/pool"
+
+- name: Ensure that upload directory exist
+  file:
+    path: "{{ upload_root }}/debpub/incoming"
+    state: directory
+    owner: debpub
+    group: publisher
+    mode: "u=rwx,g=rwx,o=rx"
+
+- name: Configure reprepro
+  template:
+    src: templates/{{ item }}.j2
+    dest: "{{ repository_root }}/deb/conf/{{ item }}"
+    owner: root
+    group: root
+    mode: "u=rw,g=r,o=r"
+  loop:
+    - distributions
+    - incoming
+
+- name: Ensure deb script is available
+  template:
+    src: templates/debsync.j2
+    dest: /home/publisher/debsync.sh
+    owner: publisher
+    group: root
+    mode: "u=rx,g=rw,o="
+
+- name: Configure systemd service for debsync
+  template:
+    src: "files/{{ item }}"
+    dest: "/lib/systemd/system/{{ item }}"
+    mode: "u=rw,g=r,o=r"
+    owner: root
+    group: root
+  loop:
+    - debsync.service
+    - debsync.timer
+
+- name: Ensure debsync system service is enabled
+  systemd:
+    enabled: yes
+    daemon_reload: yes
+    scope: system
+    name: "{{ item }}"
+  loop:
+    - debsync.service
+    - debsync.timer

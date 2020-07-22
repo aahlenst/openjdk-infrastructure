@@ -1,0 +1,10 @@
+{% for dist in deb_distributions %}
+Origin: dl.adoptium.com
+Label: dl.adoptium.com
+Codename: {{ dist.name }}
+Architectures: {{ dist.architectures|join(" ") }}
+Components: main
+Description: Debian packages of the Eclipse Adoptium project
+SignWith: {{ signing_key_id }}
+
+{% endfor %}

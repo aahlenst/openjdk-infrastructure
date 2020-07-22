@@ -1,0 +1,13 @@
+[Unit]
+Description=Runs debsync
+Wants=debsync.timer
+
+[Service]
+User=publisher
+Group=publisher
+WorkingDirectory=/home/publisher
+ExecStart=/home/publisher/debsync.sh
+StandardOutput=journal+console
+
+[Install]
+WantedBy=multi-user.target

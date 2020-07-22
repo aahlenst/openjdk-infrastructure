@@ -1,0 +1,57 @@
+---
+
+- name: Ensure that publisher user exist
+  user:
+    name: publisher
+
+- name: Ensure that upload users exist
+  user:
+    name: "{{ item }}"
+    shell: /usr/sbin/nologin
+    home: "{{ upload_root }}/{{ item }}"
+  loop:
+    - apkpub
+    - debpub
+    - rpmpub
+
+- name: "Ensure that upload users' home directory is owned by root"
+  file:
+    path: "{{ upload_root }}/{{ item }}"
+    state: directory
+    owner: "root"
+    group: "root"
+    mode: "u=rwx,g=rx,o=rx"
+  loop:
+    - apkpub
+    - debpub
+    - rpmpub
+
+- name: Ensure that ~/.ssh exists for all upload users
+  file:
+    path: "{{ upload_root }}/{{ item }}/.ssh"
+    state: directory
+    owner: "{{ item }}"
+    group: "{{ item }}"
+    mode: "u=rwx,g=,o="
+  loop:
+    - apkpub
+    - debpub
+    - rpmpub
+
+- name: Ensure that SSH public keys are configured for upload users
+  copy:
+    src: "files/keys/{{ item }}.pub"
+    dest: "{{ upload_root }}/{{ item }}/.ssh/authorized_keys"
+    owner: "{{ item }}"
+    group: "{{ item }}"
+    mode: "u=rw,g=,o="
+  loop:
+    - apkpub
+    - debpub
+    - rpmpub
+
+- name: Ensure reprepro is configured (deb)
+  include_tasks: reprepro.yml
+
+- name: Ensure createrepo is configured (rpm)
+  include_tasks: createrepo.yml

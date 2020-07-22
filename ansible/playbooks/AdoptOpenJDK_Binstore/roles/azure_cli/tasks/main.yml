@@ -1,0 +1,41 @@
+---
+- name: "Ensure that Microsoft's apt key is present"
+  apt_key:
+    id: EB3E94ADBE1229CF
+    url: "https://packages.microsoft.com/keys/microsoft.asc"
+    state: present
+
+- name: Ensure that the Debian repository for Azure CLI is configured
+  become: yes
+  apt_repository:
+    repo: "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ {{ ansible_lsb.codename }} main"
+    state: present
+    filename: azure-cli
+
+- name: Ensure Azure CLI is installed
+  apt:
+    pkg:
+      - azure-cli
+
+- name: Download azcopy
+  get_url:
+    url: https://azcopyvnext.azureedge.net/release20200709/azcopy_linux_amd64_10.5.0.tar.gz
+    dest: /tmp
+    checksum: "sha256:5f9013fcd7bee72cc36d7f566644c2a52b17a73100c4d7f29a7949fabbf959d9"
+  register: azcopy_archive
+
+- name: Unarchive azcopy
+  unarchive:
+    src: "{{ azcopy_archive.dest }}"
+    dest: /tmp
+    remote_src: yes
+  register: archive
+
+- name: Move azcopy into place
+  copy:
+    src: "/tmp/{{ azcopy_archive.dest.split('.tar.gz') | first | basename }}/azcopy"
+    dest: /usr/local/bin
+    owner: root
+    group: root
+    mode: "u=rwx,g=rx,o=rx"
+    remote_src: yes

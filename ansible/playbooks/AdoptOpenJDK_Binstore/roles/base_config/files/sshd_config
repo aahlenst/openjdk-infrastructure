@@ -1,0 +1,24 @@
+PasswordAuthentication no
+UsePAM yes
+Subsystem sftp internal-sftp
+
+Match User apkpub
+    ChrootDirectory %h
+    ForceCommand internal-sftp
+    AllowTcpForwarding no
+    PasswordAuthentication no
+    X11Forwarding no
+
+Match User debpub
+    ChrootDirectory %h
+    ForceCommand internal-sftp
+    AllowTcpForwarding no
+    PasswordAuthentication no
+    X11Forwarding no
+
+Match User rpmpub
+    ChrootDirectory %h
+    ForceCommand internal-sftp
+    AllowTcpForwarding no
+    PasswordAuthentication no
+    X11Forwarding no

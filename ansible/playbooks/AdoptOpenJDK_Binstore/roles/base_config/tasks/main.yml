@@ -1,0 +1,57 @@
+---
+- name: Configure hostname
+  hostname:
+    name: "{{ hostname }}"
+
+- name: Set timezone to UTC
+  timezone:
+    name: Etc/UTC
+
+- name: Ensure required system tools are installed
+  apt:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+    - nano
+    - apt-transport-https
+    - htop
+    - unzip
+    - sudo
+
+- name: "Ensure that directory /root/.ssh exists"
+  file:
+    path: "/root/.ssh"
+    owner: "root"
+    group: "root"
+    state: directory
+    mode: "u=rwx,g=,o="
+
+- name: Ensure that SSH public keys for root are present
+  copy:
+    src: "files/authorized_keys"
+    dest: "/root/.ssh/authorized_keys"
+    owner: "root"
+    group: "root"
+    mode: "u=rw,g=,o="
+
+- name: Ensure that sshd is securely configured
+  copy:
+    owner: root
+    group: root
+    mode:  "u=rw,g=r,o=r"
+    src: files/sshd_config
+    dest: /etc/ssh/sshd_config
+    backup: yes
+  notify: Restart sshd
+
+- name: Ensure that sshd configuration is valid
+  command: sshd -T -C user=root -C host=localhost -C addr=localhost
+  changed_when: false
+
+- name: Ensure that time is automatically synchronized
+  systemd:
+    name: systemd-timesyncd
+    state: started
+    enabled: yes
+    daemon_reload: yes

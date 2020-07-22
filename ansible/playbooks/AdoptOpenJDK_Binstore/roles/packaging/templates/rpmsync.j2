@@ -1,0 +1,23 @@
+#! /usr/bin/env bash
+# Imports the packages from the incoming directory, creates the repository indices and sync the
+# resulting repositories with Azure Blob Storage.
+
+set -euo pipefail
+
+{% for dist in rpm_distributions %}
+{% for version in dist.versions %}
+{% for arch in version.architectures %}
+rpmimport --sign --key-id {{ signing_key_id }} "{{ upload_root }}/rpmpub/incoming/{{ dist.name }}/{{ version.name }}/{{ arch }}" "{{ repository_root }}/rpm/{{ dist.name }}/{{ version.name }}/{{ arch }}"
+{% endfor %}
+{% endfor %}
+{% endfor %}
+
+{% for dist in rpm_distributions %}
+{% for version in dist.versions %}
+{% for arch in version.architectures %}
+createrepo --update "{{ repository_root }}/rpm/{{ dist.name }}/{{ version.name }}/{{ arch }}"
+{% endfor %}
+{% endfor %}
+{% endfor %}
+
+# TODO: azcopy here

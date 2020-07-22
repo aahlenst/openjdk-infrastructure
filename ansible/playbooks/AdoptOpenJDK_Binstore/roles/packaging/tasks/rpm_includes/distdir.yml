@@ -1,0 +1,35 @@
+---
+# Creating the version directories (for example: amazonlinux/2) explicitly because we want
+# everything where createrepo does not have to write to be owned by root. createrepo only has to
+# write to the architecture directories (for example: amazonlinux/2/aarch64).
+- name: "Ensure version-specific directories exist ({{ distribution.name }})"
+  file:
+    path: "{{ root_dir }}/{{ distribution.name }}/{{ item.name }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "u=rwx,g=rx,o=rx"
+  loop: "{{ distribution.versions }}"
+
+- name: "Ensure architecture-specific directories exist ({{ distribution.name }})"
+  include_tasks: rpm_includes/versiondir.yml
+  loop: "{{ distribution.versions }}"
+  loop_control:
+    loop_var: distribution_version
+
+- name: "Find all obsolete version directories ({{ distribution.name }})"
+  find:
+    path: "{{ root_dir }}/{{ distribution.name }}"
+    file_type: directory
+    recurse: no
+    excludes: "{{ distribution.versions|map(attribute='name')|list }}"
+  register: obsolete_version_directories
+  changed_when: false
+
+- name: "Remove directories of obsolete versions ({{ distribution.name }}"
+  file:
+    path: "{{ item.path }}"
+    state: absent
+  loop: "{{ obsolete_version_directories.files }}"
+  loop_control:
+    label: "{{ item.path }}"

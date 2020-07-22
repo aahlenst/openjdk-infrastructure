@@ -1,0 +1,6 @@
+Name: incoming
+IncomingDir: {{ upload_root }}/debpub/incoming
+TempDir: /tmp/deb/incoming
+Allow: {% for dist in deb_distributions %}{{ dist.name }} {%endfor%}
+
+Options: multiple_distributions

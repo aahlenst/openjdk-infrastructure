@@ -1,0 +1,73 @@
+---
+- hosts: all
+  become: yes
+  gather_facts: yes
+  vars:
+    - hostname: binstore
+    - repository_root: "/packages/repository"
+    - upload_root: "/packages/upload"
+    - signing_key_id: DAEBCF5C47ABA82FBBEFA304A83BB6921EDB7BD8
+    - deb_distributions:
+        # Debian
+        - name: jessie
+          architectures: [amd64, s390x, ppc64el, armhf, arm64]
+        - name: stretch
+          architectures: [amd64, s390x, ppc64el, armhf, arm64]
+        - name: buster
+          architectures: [amd64, s390x, ppc64el, armhf, arm64]
+        # Ubuntu
+        - name: xenial
+          architectures: [amd64, s390x, ppc64el, armhf, arm64]
+        - name: bionic
+          architectures: [amd64, s390x, ppc64el, armhf, arm64]
+        - name: focal
+          architectures: [amd64, s390x, ppc64el, armhf, arm64]
+        - name: groovy
+          architectures: [amd64, s390x, ppc64el, armhf, arm64]
+    - rpm_distributions:
+      - name: amazonlinux
+        versions:
+          - name: "1"
+            architectures: ["x86_64"]
+          - name: "2"
+            architectures: ["aarch64", "x86_64"]
+      - name: centos
+        versions:
+          - name: "6"
+            architectures: ["aarch64", "ppc64le", "s390x", "x86_64"]
+          - name: "7"
+            architectures: ["aarch64", "ppc64le", "s390x", "x86_64"]
+          - name: "8"
+            architectures: ["aarch64", "ppc64le", "s390x", "x86_64"]
+      - name: fedora
+        versions:
+          - name: "31"
+            architectures: ["x86_64"]
+          - name: "32"
+            architectures: ["x86_64"]
+          - name: "33"
+            architectures: ["x86_64"]
+      - name: opensuse
+        versions:
+          - name: "15.1"
+            architectures: ["x86_64"]
+          - name: "15.2"
+            architectures: ["x86_64"]
+      - name: rhel
+        versions:
+          - name: "6"
+            architectures: ["aarch64", "ppc64le", "s390x", "x86_64"]
+          - name: "7"
+            architectures: ["aarch64", "ppc64le", "s390x", "x86_64"]
+          - name: "8"
+            architectures: ["aarch64", "ppc64le", "s390x", "x86_64"]
+      - name: sles
+        versions:
+          - name: "12"
+            architectures: ["aarch64", "ppc64le", "s390x", "x86_64"]
+          - name: "15"
+            architectures: ["aarch64", "ppc64le", "s390x", "x86_64"]
+  roles:
+    - base_config
+    - azure_cli
+    - packaging

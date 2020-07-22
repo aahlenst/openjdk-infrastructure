@@ -1,0 +1,101 @@
+---
+- name: Ensure createrepo is installed
+  apt:
+    pkg:
+      - createrepo
+      - yum-utils
+      - rpm
+
+- name: "Configure ~/.rpmmacros file"
+  copy:
+    content: "%__gpg /usr/bin/gpg"
+    dest: "/home/publisher/.rpmmacros"
+    owner: publisher
+    group: publisher
+    mode: "u=rw,g=r,o="
+
+- name: Ensure directories for rpm repositories of each distribution exist
+  include_tasks: rpm_includes/distdir.yml
+  loop: "{{ rpm_distributions }}"
+  loop_control:
+    loop_var: distribution
+  vars:
+    root_dir: "{{ repository_root }}/rpm"
+    arch_dir_owner: rpmpub
+    arch_dir_group: publisher
+    arch_dir_mode: "u=rwx,g=rwx,o=rx"
+
+- name: Find all obsolete distribution directories
+  find:
+    path: "{{ repository_root }}/rpm"
+    file_type: directory
+    recurse: no
+    excludes: "{{ rpm_distributions|map(attribute='name')|list }}"
+  register: obsolete_distribution_directories
+  changed_when: false
+
+- name: Remove rpm repositories of obsolete distributions
+  file:
+    path: "{{ item.path }}"
+    state: absent
+  loop: "{{ obsolete_distribution_directories.files }}"
+  loop_control:
+    label: "{{ item.path }}"
+
+- name: Ensure directories for rpm uploads of each distribution exist
+  include_tasks: rpm_includes/distdir.yml
+  loop: "{{ rpm_distributions }}"
+  loop_control:
+    loop_var: distribution
+  vars:
+    root_dir: "{{ upload_root }}/rpmpub/incoming"
+    arch_dir_owner: rpmpub
+    arch_dir_group: publisher
+    # setgid is needed to ensure uploaded packages are readable by group
+    arch_dir_mode: "u=rwx,g=srwx,o=rx"
+
+- name: Find all obsolete distribution directories for uploads
+  find:
+    path: "{{ upload_root }}/rpmpub/incoming"
+    file_type: directory
+    recurse: no
+    excludes: "{{ rpm_distributions|map(attribute='name')|list }}"
+  register: obsolete_distribution_directories
+  changed_when: false
+
+- name: Remove rpm upload directories for obsolete distributions
+  file:
+    path: "{{ item.path }}"
+    state: absent
+  loop: "{{ obsolete_distribution_directories.files }}"
+  loop_control:
+    label: "{{ item.path }}"
+
+- name: Ensure rpmsync script is available
+  template:
+    src: templates/rpmsync.j2
+    dest: /home/publisher/rpmsync.sh
+    owner: publisher
+    group: root
+    mode: "u=rx,g=rw,o="
+
+- name: Configure systemd service for rpmsync
+  template:
+    src: "files/{{ item }}"
+    dest: "/lib/systemd/system/{{ item }}"
+    mode: "u=rw,g=r,o=r"
+    owner: root
+    group: root
+  loop:
+    - rpmsync.service
+    - rpmsync.timer
+
+- name: Ensure rpmsync system service is enabled
+  systemd:
+    enabled: yes
+    daemon_reload: yes
+    scope: system
+    name: "{{ item }}"
+  loop:
+    - rpmsync.service
+    - rpmsync.timer

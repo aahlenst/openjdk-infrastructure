@@ -1,0 +1,26 @@
+---
+- name: "Ensure arch-specific directories exist ({{ distribution.name }}/{{ distribution_version.name }})"
+  file:
+    path: "{{ root_dir }}/{{ distribution.name }}/{{ distribution_version.name }}/{{ item }}"
+    state: directory
+    owner: "{{ arch_dir_owner }}"
+    group: "{{ arch_dir_group }}"
+    mode: "{{ arch_dir_mode }}"
+  loop: "{{ distribution_version.architectures }}"
+
+- name: "Find all obsolete architecture directories ({{ distribution.name }}/{{ distribution_version.name }})"
+  find:
+    path: "{{ root_dir }}/{{ distribution.name }}/{{ distribution_version.name }}"
+    file_type: directory
+    recurse: no
+    excludes: "{{ distribution_version.architectures }}"
+  register: obsolete_architecture_directories
+  changed_when: false
+
+- name: "Remove directories of obsolete architectures ({{ distribution.name }}/{{ distribution_version.name }}"
+  file:
+    path: "{{ item.path }}"
+    state: absent
+  loop: "{{ obsolete_architecture_directories.files }}"
+  loop_control:
+    label: "{{ item.path }}"

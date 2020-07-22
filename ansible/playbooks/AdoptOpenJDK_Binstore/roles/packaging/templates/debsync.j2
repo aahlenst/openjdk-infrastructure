@@ -1,0 +1,8 @@
+#! /usr/bin/env bash
+# Imports all deb packages from the incoming directory, updates the repository indices and syncs
+# the resulting repositories with Azure Blob Storage.
+
+set -euo pipefail
+
+reprepro -Vb {{ repository_root }}/deb processincoming incoming
+# TODO: azcopy here
